@@ -379,8 +379,8 @@ def upload_videos():
         input_dir.mkdir(exist_ok=True)
         
         # Cập nhật đường dẫn lưu file vào trong folder input
-        video1_path = input_dir / 'video1.mp4'
-        video2_path = input_dir / 'video2.mp4'
+        video1_path = input_dir / 'camera1.mp4'
+        video2_path = input_dir / 'camera2.mp4'
         # --- [END FIX] ---
 
         # Store work directory
