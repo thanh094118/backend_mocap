@@ -1,0 +1,26 @@
+# ============================================
+# FILE 8: docker-compose.yml (Updated)
+# ============================================
+version: '3.8'
+
+services:
+  easymocap-api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./output:/app/output
+      - ./temp:/app/temp
+      # Mount local models for development (optional)
+      # - ./data:/app/data
+      # - ./models:/app/models
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+      - OMP_NUM_THREADS=1
+      - MKL_NUM_THREADS=1
+    restart: unless-stopped
+    mem_limit: 2g
+    cpus: 1
