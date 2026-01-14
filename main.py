@@ -68,19 +68,6 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
             'message': 'Checking models...'
         }
         
-        # Check if models exist, if not download
-        models_dir = Path('/app/models')
-        if not models_dir.exists() or not list(models_dir.glob('**/*.pth')):
-            logger.info("Models not found, downloading...")
-            result = subprocess.run(
-                ['python', '/app/download_models.py'],
-                capture_output=True,
-                text=True,
-                timeout=600  # 10 minutes timeout
-            )
-            if result.returncode != 0:
-                raise Exception(f"Model download failed: {result.stderr}")
-        
         # Bước 1: Extract images
         processing_status[job_id] = {
             'status': 'processing', 
