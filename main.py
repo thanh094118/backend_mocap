@@ -21,6 +21,24 @@ app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB max
 processing_status = {}
 job_directories = {}
 
+def log_directory_structure(startpath):
+    """In ra cấu trúc thư mục để debug"""
+    logger.info(f"--- Scanning directory: {startpath} ---")
+    try:
+        for root, dirs, files in os.walk(startpath):
+            level = root.replace(str(startpath), '').count(os.sep)
+            indent = ' ' * 4 * level
+            logger.info(f"{indent}{os.path.basename(root)}/")
+            subindent = ' ' * 4 * (level + 1)
+            # Chỉ in 5 file đầu tiên để log đỡ dài
+            for f in files[:5]:
+                logger.info(f"{subindent}{f}")
+            if len(files) > 5:
+                logger.info(f"{subindent}... ({len(files)} total files)")
+    except Exception as e:
+        logger.error(f"Error scanning directory: {e}")
+    logger.info("---------------------------------------")
+
 def allowed_file(filename):
     return filename.lower().endswith('.mp4')
 
@@ -40,12 +58,13 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
     """Chạy toàn bộ pipeline xử lý"""
     try:
         logger.info(f"Starting pipeline for job {job_id}")
+        logger.info(f"Working directory: {work_dir}")
         
         # Bước 0: Download models (nếu chưa có)
         processing_status[job_id] = {
             'status': 'processing', 
             'step': 0, 
-            'total_steps': 7,
+            'total_steps': 6,
             'message': 'Checking models...'
         }
         
@@ -66,7 +85,7 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
         processing_status[job_id] = {
             'status': 'processing', 
             'step': 1,
-            'total_steps': 7, 
+            'total_steps': 6, 
             'message': 'Extracting images from videos...'
         }
         logger.info(f"Step 1: Extracting images for job {job_id}")
@@ -79,15 +98,20 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
             timeout=300
         )
         if result.returncode != 0:
+            logger.error(f"Extract image stderr: {result.stderr}")
+            logger.error(f"Extract image stdout: {result.stdout}")
             raise Exception(f"Image extraction failed: {result.stderr}")
         
         logger.info(f"Step 1 completed. Output: {result.stdout}")
+        
+        # Debug: Check what was created
+        log_directory_structure(work_dir)
         
         # Bước 2a: EMC for camera1
         processing_status[job_id] = {
             'status': 'processing', 
             'step': 2,
-            'total_steps': 7,
+            'total_steps': 6,
             'message': 'Processing camera1 (pose estimation)...'
         }
         logger.info(f"Step 2a: Processing camera1 for job {job_id}")
@@ -95,29 +119,30 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
         camera1_output = Path(work_dir) / 'output' / 'camera1'
         camera1_output.mkdir(parents=True, exist_ok=True)
         
-        # Auto-answer prompts with 'y\ny\nn\n'
-        emc_input = "y\ny\nn\n"
+        # Run EMC without auto-answer prompts
         result = subprocess.run(
             ['emc', '--data', '/app/config/datasets/svimage.yml', 
              '--exp', '/app/config/1v1p/hrnet_pare_finetune.yml', 
              '--root', str(camera1_output), 
              '--subs', 'images'],
-            input=emc_input,
             capture_output=True,
             text=True,
             cwd=work_dir,
             timeout=1800  # 30 minutes
         )
         if result.returncode != 0:
+            logger.error(f"Camera1 EMC stderr: {result.stderr}")
+            logger.error(f"Camera1 EMC stdout: {result.stdout}")
             raise Exception(f"Camera1 processing failed: {result.stderr}")
         
         logger.info(f"Step 2a completed")
+        log_directory_structure(camera1_output)
         
         # Bước 2b: EMC for camera2
         processing_status[job_id] = {
             'status': 'processing', 
             'step': 2.5,
-            'total_steps': 7,
+            'total_steps': 6,
             'message': 'Processing camera2 (pose estimation)...'
         }
         logger.info(f"Step 2b: Processing camera2 for job {job_id}")
@@ -130,22 +155,24 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
              '--exp', '/app/config/1v1p/hrnet_pare_finetune.yml', 
              '--root', str(camera2_output), 
              '--subs', 'images'],
-            input=emc_input,
             capture_output=True,
             text=True,
             cwd=work_dir,
             timeout=1800
         )
         if result.returncode != 0:
+            logger.error(f"Camera2 EMC stderr: {result.stderr}")
+            logger.error(f"Camera2 EMC stdout: {result.stdout}")
             raise Exception(f"Camera2 processing failed: {result.stderr}")
         
         logger.info(f"Step 2b completed")
+        log_directory_structure(camera2_output)
         
         # Bước 3: Merge poses
         processing_status[job_id] = {
             'status': 'processing', 
             'step': 3,
-            'total_steps': 7,
+            'total_steps': 6,
             'message': 'Merging poses from both cameras...'
         }
         logger.info(f"Step 3: Merging poses for job {job_id}")
@@ -158,15 +185,17 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
             timeout=300
         )
         if result.returncode != 0:
+            logger.error(f"Merged poses stderr: {result.stderr}")
+            logger.error(f"Merged poses stdout: {result.stdout}")
             raise Exception(f"Pose merging failed: {result.stderr}")
         
-        logger.info(f"Step 3 completed")
+        logger.info(f"Step 3 completed. Output: {result.stdout}")
         
         # Bước 4: Pixel processing
         processing_status[job_id] = {
             'status': 'processing', 
             'step': 4,
-            'total_steps': 7,
+            'total_steps': 6,
             'message': 'Processing pixel data...'
         }
         logger.info(f"Step 4: Pixel processing for job {job_id}")
@@ -179,15 +208,17 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
             timeout=300
         )
         if result.returncode != 0:
+            logger.error(f"Pixel processing stderr: {result.stderr}")
+            logger.error(f"Pixel processing stdout: {result.stdout}")
             raise Exception(f"Pixel processing failed: {result.stderr}")
         
-        logger.info(f"Step 4 completed")
+        logger.info(f"Step 4 completed. Output: {result.stdout}")
         
         # Bước 5: Total merge
         processing_status[job_id] = {
             'status': 'processing', 
             'step': 5,
-            'total_steps': 7,
+            'total_steps': 6,
             'message': 'Performing final merge...'
         }
         logger.info(f"Step 5: Total merge for job {job_id}")
@@ -200,15 +231,17 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
             timeout=300
         )
         if result.returncode != 0:
+            logger.error(f"Total merge stderr: {result.stderr}")
+            logger.error(f"Total merge stdout: {result.stdout}")
             raise Exception(f"Total merge failed: {result.stderr}")
         
-        logger.info(f"Step 5 completed")
+        logger.info(f"Step 5 completed. Output: {result.stdout}")
         
         # Bước 6: Alignment
         processing_status[job_id] = {
             'status': 'processing', 
             'step': 6,
-            'total_steps': 7,
+            'total_steps': 6,
             'message': 'Aligning final output...'
         }
         logger.info(f"Step 6: Alignment for job {job_id}")
@@ -221,47 +254,65 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
             timeout=300
         )
         if result.returncode != 0:
+            logger.error(f"Alignment stderr: {result.stderr}")
+            logger.error(f"Alignment stdout: {result.stdout}")
             raise Exception(f"Alignment failed: {result.stderr}")
         
-        logger.info(f"Step 6 completed")
+        logger.info(f"Step 6 completed. Output: {result.stdout}")
         
-        # Bước 7: Zip output
-        processing_status[job_id] = {
-            'status': 'processing', 
-            'step': 7,
-            'total_steps': 7,
-            'message': 'Packaging results...'
-        }
-        logger.info(f"Step 7: Zipping results for job {job_id}")
-        
+        # Check output folder
         output_folder = Path(work_dir) / 'output' / 'output_final'
+        logger.info(f"Looking for output at: {output_folder}")
         
         if not output_folder.exists():
+            logger.error(f"Output folder not found: {output_folder}")
+            # Log what exists in output directory
+            output_dir = Path(work_dir) / 'output'
+            if output_dir.exists():
+                log_directory_structure(output_dir)
             raise Exception(f"Output folder not found: {output_folder}")
+        
+        # Debug: Show output structure
+        log_directory_structure(output_folder)
         
         # Check if there are files in output
         output_files = list(output_folder.rglob('*'))
+        output_files = [f for f in output_files if f.is_file()]  # Only files, not directories
+        
         if not output_files:
             raise Exception("No output files generated")
         
         logger.info(f"Found {len(output_files)} files to zip")
+        for f in output_files[:10]:  # Log first 10 files
+            logger.info(f"  - {f.relative_to(output_folder)}")
+        
+        # Zip output
+        processing_status[job_id] = {
+            'status': 'processing', 
+            'step': 6,
+            'total_steps': 6,
+            'message': 'Packaging results...'
+        }
+        logger.info(f"Creating zip file for job {job_id}")
         
         zip_path = Path(work_dir) / 'results.zip'
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            for root, dirs, files in os.walk(output_folder):
-                for file in files:
-                    file_path = Path(root) / file
-                    arcname = file_path.relative_to(output_folder)
-                    zipf.write(file_path, arcname)
-                    logger.info(f"Added to zip: {arcname}")
+            for file_path in output_files:
+                arcname = file_path.relative_to(output_folder)
+                zipf.write(file_path, arcname)
+                logger.info(f"Added to zip: {arcname}")
+        
+        zip_size = zip_path.stat().st_size / 1024 / 1024  # Size in MB
+        logger.info(f"Zip file created: {zip_path} ({zip_size:.2f} MB)")
         
         processing_status[job_id] = {
             'status': 'completed', 
-            'step': 7,
-            'total_steps': 7,
+            'step': 6,
+            'total_steps': 6,
             'message': 'Processing completed successfully',
             'zip_path': str(zip_path),
-            'output_files': len(output_files)
+            'output_files': len(output_files),
+            'zip_size_mb': round(zip_size, 2)
         }
         
         logger.info(f"Pipeline completed for job {job_id}")
@@ -300,13 +351,6 @@ def home():
 def upload_videos():
     """
     Upload 2 video files và bắt đầu xử lý
-    
-    Request:
-    - video1: MP4 file (camera 1)
-    - video2: MP4 file (camera 2)
-    
-    Response:
-    - job_id: ID để track tiến trình
     """
     try:
         # Validate files
@@ -325,17 +369,24 @@ def upload_videos():
         # Tạo job ID
         job_id = str(uuid.uuid4())
         
-        # Tạo thư mục làm việc
+        # Tạo thư mục làm việc gốc (/app/temp/<job_id>)
         work_dir = Path('/app/temp') / job_id
         work_dir.mkdir(parents=True, exist_ok=True)
         
+        # --- [START FIX] TẠO THÊM FOLDER INPUT ---
+        # Tạo folder con 'input' để script extract_image.py tìm thấy
+        input_dir = work_dir / 'input'
+        input_dir.mkdir(exist_ok=True)
+        
+        # Cập nhật đường dẫn lưu file vào trong folder input
+        video1_path = input_dir / 'video1.mp4'
+        video2_path = input_dir / 'video2.mp4'
+        # --- [END FIX] ---
+
         # Store work directory
         job_directories[job_id] = str(work_dir)
         
         # Lưu videos
-        video1_path = work_dir / 'video1.mp4'
-        video2_path = work_dir / 'video2.mp4'
-        
         video1.save(str(video1_path))
         video2.save(str(video2_path))
         
@@ -347,11 +398,13 @@ def upload_videos():
         processing_status[job_id] = {
             'status': 'queued',
             'step': 0,
-            'total_steps': 7,
+            'total_steps': 7, # Lưu ý: Nên để tổng số bước khớp với logic (7 bước)
             'message': 'Job queued'
         }
         
-        # Khởi động pipeline trong background thread
+        # Khởi động pipeline
+        # Lưu ý: video1_path giờ đã là đường dẫn nằm trong folder input
+        # thread sẽ truyền đúng đường dẫn mới này cho hàm run_pipeline
         thread = threading.Thread(
             target=run_pipeline,
             args=(job_id, str(video1_path), str(video2_path), str(work_dir)),
@@ -382,14 +435,15 @@ def check_status(job_id):
         'job_id': job_id,
         'status': status['status'],
         'step': status.get('step', 0),
-        'total_steps': status.get('total_steps', 7),
+        'total_steps': status.get('total_steps', 6),
         'message': status.get('message', ''),
-        'progress': f"{status.get('step', 0)}/{status.get('total_steps', 7)}"
+        'progress': f"{status.get('step', 0)}/{status.get('total_steps', 6)}"
     }
     
     if status['status'] == 'completed':
         response['download_url'] = f'/api/download/{job_id}'
         response['output_files'] = status.get('output_files', 0)
+        response['zip_size_mb'] = status.get('zip_size_mb', 0)
     
     return jsonify(response)
 
