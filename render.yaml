@@ -1,17 +1,33 @@
 services:
   - type: web
-    buildCommand: pip install -r requirements.txt && python download_models.py
     name: easymocap-api
     env: docker
     dockerfilePath: ./Dockerfile
-    plan: standard  # Cần ít nhất Standard plan cho CUDA/ML workload
-    healthCheckPath: /
+    plan: standard  # Hoặc starter/pro
+    region: oregon  # Hoặc frankfurt (gần VN hơn)
+    
     envVars:
+      - key: PORT
+        value: 10000
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: MAX_WORKERS
+        value: 1
       - key: PYTHON_VERSION
         value: 3.9
       - key: FLASK_ENV
         value: production
+    
+    healthCheckPath: /
+    
+    # Auto-deploy từ GitHub
+    autoDeploy: true
+    
+    # Build settings
+    buildCommand: echo "Using Dockerfile"
+    
+    # Disk storage (cho temp files)
     disk:
-      name: easymocap-data
-      mountPath: /app/output
+      name: data
+      mountPath: /app/temp
       sizeGB: 10
