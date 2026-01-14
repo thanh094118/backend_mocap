@@ -351,13 +351,6 @@ def home():
 def upload_videos():
     """
     Upload 2 video files và bắt đầu xử lý
-    
-    Request:
-    - video1: MP4 file (camera 1)
-    - video2: MP4 file (camera 2)
-    
-    Response:
-    - job_id: ID để track tiến trình
     """
     try:
         # Validate files
@@ -376,17 +369,24 @@ def upload_videos():
         # Tạo job ID
         job_id = str(uuid.uuid4())
         
-        # Tạo thư mục làm việc
+        # Tạo thư mục làm việc gốc (/app/temp/<job_id>)
         work_dir = Path('/app/temp') / job_id
         work_dir.mkdir(parents=True, exist_ok=True)
         
+        # --- [START FIX] TẠO THÊM FOLDER INPUT ---
+        # Tạo folder con 'input' để script extract_image.py tìm thấy
+        input_dir = work_dir / 'input'
+        input_dir.mkdir(exist_ok=True)
+        
+        # Cập nhật đường dẫn lưu file vào trong folder input
+        video1_path = input_dir / 'video1.mp4'
+        video2_path = input_dir / 'video2.mp4'
+        # --- [END FIX] ---
+
         # Store work directory
         job_directories[job_id] = str(work_dir)
         
         # Lưu videos
-        video1_path = work_dir / 'video1.mp4'
-        video2_path = work_dir / 'video2.mp4'
-        
         video1.save(str(video1_path))
         video2.save(str(video2_path))
         
@@ -398,11 +398,13 @@ def upload_videos():
         processing_status[job_id] = {
             'status': 'queued',
             'step': 0,
-            'total_steps': 6,
+            'total_steps': 7, # Lưu ý: Nên để tổng số bước khớp với logic (7 bước)
             'message': 'Job queued'
         }
         
-        # Khởi động pipeline trong background thread
+        # Khởi động pipeline
+        # Lưu ý: video1_path giờ đã là đường dẫn nằm trong folder input
+        # thread sẽ truyền đúng đường dẫn mới này cho hàm run_pipeline
         thread = threading.Thread(
             target=run_pipeline,
             args=(job_id, str(video1_path), str(video2_path), str(work_dir)),
