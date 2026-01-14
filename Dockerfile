@@ -32,18 +32,6 @@ WORKDIR /app
 # Copy requirements first (for better caching)
 COPY requirements.txt .
 
-COPY models/ ./models/
-COPY data/ ./data/
-
-# Copy application code
-COPY main.py .
-COPY myscript/ ./myscript/
-COPY config/ ./config/
-
-# Create necessary directories with proper permissions
-RUN mkdir -p /app/output /app/temp && \
-    chmod 777 /app/output /app/temp
-
 # Install PyTorch CPU-only version
 # Thêm "numpy<2.0" vào danh sách cài đặt
 RUN pip install --no-cache-dir \
@@ -57,12 +45,18 @@ RUN pip install --no-cache-dir \
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy EasyMocap source code
+COPY main.py .
+COPY myscript/ ./myscript/
+COPY config/ ./config/
 COPY setup.py .
 COPY easymocap/ ./easymocap/
 COPY myeasymocap/ ./myeasymocap/
 COPY apps/ ./apps/
 COPY config/ ./config/
+COPY download_models.py .
+COPY start.sh .
 
+RUN chmod +x start.sh
 # Install EasyMocap in development mode
 RUN python setup.py develop
 
@@ -71,7 +65,8 @@ COPY main.py .
 COPY myscript/ ./myscript/
 
 # Create necessary directories
-RUN mkdir -p /app/output /app/temp
+RUN mkdir -p /app/output /app/temp /app/models && \
+    chmod 777 /app/output /app/temp /app/models
 
 # Expose port
 EXPOSE 5000
@@ -81,4 +76,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5000/ || exit 1
 
 # Start command
-CMD ["gunicorn", "main:app", "--bind", "0.0.0.0:5000", "--timeout", "900", "--workers", "1", "--worker-class", "sync", "--worker-tmp-dir", "/dev/shm"]
+CMD ["./start.sh"]
