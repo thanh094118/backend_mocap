@@ -72,7 +72,7 @@ RUN mkdir -p /app/output /app/temp /app/models && \
 EXPOSE 5000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=600s --retries=3 \
     CMD curl -f http://localhost:5000/ || exit 1
 
 # Start command
