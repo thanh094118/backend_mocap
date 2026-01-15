@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies
+# 1. Install system dependencies (Đã thêm unzip)
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get update && \
@@ -14,6 +14,7 @@ RUN apt-get clean && \
     git \
     wget \
     curl \
+    unzip \
     build-essential \
     cmake \
     libgl1 \
@@ -29,11 +30,7 @@ RUN apt-get clean && \
 # Set working directory
 WORKDIR /app
 
-# Copy requirements first (for better caching)
-COPY requirements.txt .
-
-# Install PyTorch CPU-only version
-# Thêm "numpy<2.0" vào danh sách cài đặt
+# 2. Install PyTorch CPU-only version (Cài trước để tận dụng cache)
 RUN pip install --no-cache-dir \
     "numpy==1.23.5" \
     torch==2.4.1+cpu \
@@ -41,30 +38,26 @@ RUN pip install --no-cache-dir \
     torchaudio==2.4.1+cpu \
     --index-url https://download.pytorch.org/whl/cpu
 
-# Install other Python dependencies
+# 3. Copy requirements and install dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy EasyMocap source code
-COPY main.py .
-COPY myscript/ ./myscript/
-COPY config/ ./config/
-COPY setup.py .
-COPY easymocap/ ./easymocap/
-COPY myeasymocap/ ./myeasymocap/
-COPY apps/ ./apps/
-COPY config/ ./config/
-COPY download_models.py .
-COPY start.sh .
+# 4. Copy mã nguồn (Gộp các lệnh COPY lại cho gọn)
+COPY . .
 
+# 5. Cấp quyền cho script khởi động
 RUN chmod +x start.sh
-# Install EasyMocap in development mode
-RUN python setup.py develop
 
-# Copy application code
-COPY main.py .
-COPY myscript/ ./myscript/
+# 6. Install EasyMocap (FIX QUAN TRỌNG: dùng pip install thay vì setup.py develop)
+# Điều này giúp importlib tìm thấy metadata của gói easymocap
+RUN pip install .
 
-# Create necessary directories
+# 7. Tải Model (Chạy sau khi đã COPY code vào)
+# Lưu ý: Nếu bạn muốn tải model lúc build image thì bỏ comment dòng dưới.
+# Tuy nhiên, nếu model quá nặng, nên để nó chạy trong start.sh hoặc tải tay bên ngoài.
+# RUN python download_models.py
+
+# 8. Create necessary directories
 RUN mkdir -p /app/output /app/temp /app/models && \
     chmod 777 /app/output /app/temp /app/models
 
