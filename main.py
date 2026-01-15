@@ -64,6 +64,8 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
     """Pipeline xử lý video"""
     global current_job
     
+    work_dir = Path(work_dir)
+    
     try:
         logger.info(f"{'='*60}")
         logger.info(f"🚀 STARTING JOB: {job_id}")
