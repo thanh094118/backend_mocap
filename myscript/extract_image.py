@@ -2,12 +2,32 @@
 import os
 from os.path import join
 from glob import glob
+import subprocess
 
 extensions = ['.mp4', '.webm', '.flv', '.MP4', '.MOV', '.mov', '.avi']
 
 def run(cmd):
-    print(cmd)
     os.system(cmd)
+
+def get_video_frame_count(video_path, ffmpeg='ffmpeg'):
+    """Lấy tổng số frame của video"""
+    try:
+        cmd = f'{ffmpeg} -i "{video_path}" -map 0:v:0 -c copy -f null - 2>&1'
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        output = result.stderr
+        
+        for line in output.split('\n'):
+            if 'frame=' in line:
+                parts = line.split('frame=')
+                if len(parts) > 1:
+                    frame_str = parts[1].split()[0].strip()
+                    try:
+                        return int(frame_str)
+                    except:
+                        pass
+        return None
+    except:
+        return None
 
 def extract_images(input_folder, output_folder, ffmpeg='ffmpeg', num=-1, scale=1, transpose=-1, remove=0, restart=False, debug=False):
     """
@@ -21,12 +41,28 @@ def extract_images(input_folder, output_folder, ffmpeg='ffmpeg', num=-1, scale=1
     )
     
     if not videos:
-        print(f"Không tìm thấy video nào trong folder: {input_folder}")
+        print(f"❌ Không tìm thấy video nào trong folder: {input_folder}")
         return
     
-    print(f"Tìm thấy {len(videos)} video(s)")
+    print("\n" + "="*70)
+    print("📂 INPUT")
+    print("="*70)
+    print(f"   Folder: {os.path.abspath(input_folder)}")
+    print(f"   Số video: {len(videos)}")
+    for i, v in enumerate(videos, 1):
+        print(f"   [{i}] {os.path.basename(v)}")
     
-    for videoname in videos:
+    print("\n" + "="*70)
+    print("📁 OUTPUT")
+    print("="*70)
+    print(f"   Folder: {os.path.abspath(output_folder)}")
+    print(f"   Cấu trúc: output/<tên_video>/images/")
+    
+    print("\n" + "="*70)
+    print("⚙️  PROCESS")
+    print("="*70)
+    
+    for idx, videoname in enumerate(videos, 1):
         # Lấy tên file không có phần mở rộng
         video_basename = '.'.join(os.path.basename(videoname).split('.')[:-1])
         
@@ -35,7 +71,8 @@ def extract_images(input_folder, output_folder, ffmpeg='ffmpeg', num=-1, scale=1
         
         # Kiểm tra nếu đã tồn tại và có đủ ảnh
         if os.path.exists(outpath) and (len(os.listdir(outpath)) > 10 or (num != -1 and len(os.listdir(outpath)) == num)) and not restart:
-            print(f"Bỏ qua {video_basename} - đã tồn tại")
+            print(f"\n[{idx}/{len(videos)}] ⏭️  {video_basename}")
+            print(f"        Bỏ qua - đã tồn tại {len(os.listdir(outpath))} ảnh")
             continue
         
         os.makedirs(outpath, exist_ok=True)
@@ -52,36 +89,63 @@ def extract_images(input_folder, output_folder, ffmpeg='ffmpeg', num=-1, scale=1
         elif transpose != -1:
             other_cmd += ' -vf transpose={}'.format(transpose)
         
-        cmd = '{} -i "{}" {} -q:v 1 -start_number 0 "{}/%06d.jpg"'.format(
+        # Thêm progress vào cmd
+        cmd = '{} -i "{}" {} -q:v 1 -start_number 0 -progress pipe:1 "{}/%06d.jpg"'.format(
             ffmpeg, videoname, other_cmd, outpath)
         
         if not debug:
-            cmd += ' -loglevel quiet'
+            cmd += ' -loglevel error'
         
-        print(f"\nĐang xử lý: {video_basename}")
-        run(cmd)
+        print(f"\n[{idx}/{len(videos)}] 🎬 {video_basename}")
+        print(f"        Output: {outpath}")
+        
+        # Chạy ffmpeg và hiển thị progress
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1)
+        
+        total_frames = get_video_frame_count(videoname, ffmpeg) if num == -1 else num
+        current_frame = 0
+        
+        for line in process.stdout:
+            if 'frame=' in line:
+                try:
+                    frame_num = int(line.split('=')[1].strip())
+                    current_frame = frame_num
+                    if total_frames:
+                        percent = min(100, (current_frame / total_frames) * 100)
+                        bar_length = 30
+                        filled = int(bar_length * percent / 100)
+                        bar = '█' * filled + '░' * (bar_length - filled)
+                        print(f"\r        [{bar}] {percent:.1f}% ({current_frame}/{total_frames} frames)", end='', flush=True)
+                    else:
+                        print(f"\r        Processing... {current_frame} frames", end='', flush=True)
+                except:
+                    pass
+        
+        process.wait()
+        print()  # Xuống dòng sau khi hoàn thành
         
         # Xóa frame nếu cần
         if remove != 0:
             frames = sorted(glob(join(outpath, '*.jpg')))
             if remove > 0:
                 # Xóa frame đầu
+                print(f"        🗑️  Xóa {remove} frame đầu...")
                 for i in range(min(remove, len(frames))):
                     os.remove(frames[i])
-                    print(f"Đã xóa: {frames[i]}")
                 # Đổi tên lại các frame còn lại
                 remaining_frames = frames[remove:]
-                for idx, frame in enumerate(remaining_frames):
-                    new_name_file = join(outpath, f"{idx:06d}.jpg")
+                for idx_frame, frame in enumerate(remaining_frames):
+                    new_name_file = join(outpath, f"{idx_frame:06d}.jpg")
                     os.rename(frame, new_name_file)
             elif remove < 0:
                 # Xóa frame cuối
+                print(f"        🗑️  Xóa {abs(remove)} frame cuối...")
                 frames_to_remove = frames[remove:] 
                 for frame in frames_to_remove:
                     os.remove(frame)
-                    print(f"Đã xóa: {frame}")
         
-        print(f"Hoàn thành: {video_basename}")
+        final_count = len(glob(join(outpath, '*.jpg')))
+        print(f"        ✅ Hoàn thành: {final_count} ảnh")
 
 if __name__ == "__main__":
     # Cấu hình cố định
@@ -101,12 +165,9 @@ if __name__ == "__main__":
     os.makedirs(INPUT_FOLDER, exist_ok=True)
     os.makedirs(OUTPUT_FOLDER, exist_ok=True)
     
-    print("=" * 50)
-    print("TRÍCH XUẤT ẢNH TỪ VIDEO")
-    print("=" * 50)
-    print(f"Input folder: {INPUT_FOLDER}")
-    print(f"Output folder: {OUTPUT_FOLDER}")
-    print("=" * 50)
+    print("\n" + "="*70)
+    print("🎥 TRÍCH XUẤT ẢNH TỪ VIDEO")
+    print("="*70)
     
     # Chạy trích xuất
     extract_images(
@@ -120,7 +181,4 @@ if __name__ == "__main__":
         restart=RESTART,
         debug=DEBUG
     )
-    
-    print("\n" + "=" * 50)
     print("HOÀN THÀNH!")
-    print("=" * 50)
