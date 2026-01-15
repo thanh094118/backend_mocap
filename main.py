@@ -132,15 +132,34 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
         # Stage 4: Merge poses
         current_job['stage'] = 'Stage 4/6: Merging poses'
         logger.info(f"📍 {current_job['stage']}")
-        logger.info(f"   Input: {camera1_output}, {camera2_output}")
+        
+        # 1. Kiểm tra xem file đầu vào có tồn tại không trước khi chạy
+        check_path_1 = work_dir / 'output' / 'camera1'
+        check_path_2 = work_dir / 'output' / 'camera2'
+        
+        # Đếm file để debug
+        try:
+            files_1 = list(check_path_1.rglob('*'))
+            files_2 = list(check_path_2.rglob('*'))
+            logger.info(f"🔎 DEBUG: Camera1 files: {len(files_1)}, Camera2 files: {len(files_2)}")
+        except Exception as e:
+            logger.error(f"🔎 DEBUG Error check files: {e}")
+
+        logger.info(f"   Input: {check_path_1}, {check_path_2}")
         logger.info(f"   Output: {work_dir}/output/merged_poses/")
         
+        # 2. Chạy lệnh
         result = subprocess.run(
             ['python', '/app/myscript/merged_poses.py'],
             capture_output=True, text=True, cwd=work_dir, timeout=600
         )
+        
+        # 3. In lỗi chi tiết nếu thất bại
         if result.returncode != 0:
+            logger.error(f"❌ STDERR (Lỗi chi tiết): {result.stderr}")
+            logger.error(f"❌ STDOUT (Log chạy): {result.stdout}")
             raise Exception(f"Merge poses failed: {result.stderr}")
+            
         logger.info(f"   ✅ Stage 4 completed")
         
         # Stage 5: Pixel processing
