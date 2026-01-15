@@ -8,16 +8,16 @@ args:
       args:
         model: yolov5m
         name: person
-        ckpt: models/yolo/yolov5m.pt
-    keypoints2d: 
+        ckpt: models/yolov5m.pt
+    keypoints2d:
       module: myeasymocap.backbone.hrnet.myhrnet.MyHRNet
       key_from_data: [images, imgnames]
       key_from_previous: [bbox]
       key_keep: []
       args:
-        ckpt: data/models/pose_hrnet_w48_384x288.pth
+        ckpt: models/pose_hrnet_w48_384x288.pth
         test_multiscale: False
-        multiscale_factors: [0.8, 1.0, 1.2]  
+        multiscale_factors: [0.8, 1.0, 1.2]
     filter_keypoints:
       module: myeasymocap.operations.filter.FilterKeypoints
       key_from_data: []
@@ -39,10 +39,10 @@ args:
       key_keep: [cameras, imgnames] # 将这些参数都保留到最后的输出中
       args:
         ckpt: 3dpw # 指定使用3dpw的预训练模型
-    
-    # infer2: 
+
+    # infer2:
     #   module: myeasymocap.backbone.cliff.cliff.MyCLIFF
-    #   key_from_data: [images, imgnames] 
+    #   key_from_data: [images, imgnames]
     #   key_from_previous: [bbox, params, imgnames]
     #   key_keep: [cameras, imgnames]
     #   args:
@@ -52,13 +52,13 @@ args:
     #   key_from_previous: [params, imgnames]
     #   key_keep: [cameras, imgnames]
     #   args:
-    #     hybrik_res_dir: 'Test/CLIFF/b/pose_json' 
+    #     hybrik_res_dir: 'Test/CLIFF/b/pose_json'
     #     output_dir: 'fix'
   at_final:
     load_body_model: # 载入SMPL模型
       module: myeasymocap.io.model.SMPLLoader
       args:
-        model_path: models/pare/data/body_models/smpl/SMPL_NEUTRAL.pkl
+        model_path: models/SMPL_NEUTRAL.pkl
         regressor_path: models/J_regressor_body25.npy
     init_translation: # 给定crop系下的姿态、2D关键点、相机参数，返回世界系下的人体姿态
       module: myeasymocap.operations.init.InitTranslation
@@ -76,13 +76,13 @@ args:
       module: myeasymocap.operations.init.MeanShapes
       key_from_data: [params]
       args:
-        keys: ['shapes']
+        keys: ["shapes"]
     init_RT:
       module: myeasymocap.operations.optimizer.Optimizer
       key_from_data: [keypoints, cameras]
       key_from_previous: [model, params]
       args:
-        optimizer_args: {optim_type: lbfgs}
+        optimizer_args: { optim_type: lbfgs }
         optimize_keys: [Th, Rh]
         loss:
           repro:
@@ -112,7 +112,7 @@ args:
       key_from_data: [keypoints, cameras]
       key_from_previous: [model, params]
       args:
-        optimizer_args: {optim_type: lbfgs}
+        optimizer_args: { optim_type: lbfgs }
         optimize_keys: [poses, Rh, Th]
         loss:
           repro:
@@ -158,17 +158,16 @@ args:
       key_from_previous: [params, model]
       args:
         name: smpl
-    render:
-      module: myeasymocap.io.vis3d.Render
-      key_from_data: [cameras, imgnames]
-      key_from_previous: [params, body_model]
-      args:
-        backend: pyrender
-        part_segmentation_path: models/pare/data/smpl_partSegmentation_mapping.pkl
-    make_video:
-      module: myeasymocap.io.video.MakeVideo
-      args:
-        fps: 30
-        keep_image: True
-
+    # render:
+    #   module: myeasymocap.io.vis3d.Render
+    #   key_from_data: [cameras, imgnames]
+    #   key_from_previous: [params, body_model]
+    #   args:
+    #     backend: pyrender
+    #     part_segmentation_path: models/pare/data/smpl_partSegmentation_mapping.pkl
+    # make_video:
+    #   module: myeasymocap.io.video.MakeVideo
+    #   args:
+    #     fps: 30
+    #     keep_image: True
 #emc --data config/datasets/svimage.yml   --exp config/1v1p/hrnet_pare_finetune.yml   --root data   --ranges 1 400 1   --subs images

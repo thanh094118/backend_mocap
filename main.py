@@ -1,3 +1,69 @@
+# ==============================================================================
+# 🔍 DIAGNOSTIC SCRIPT: KIỂM TRA FILE HỆ THỐNG
+# ==============================================================================
+import os
+import sys
+from pathlib import Path
+
+def print_separator(title):
+    print(f"\n{'='*60}")
+    print(f"🔍 {title}")
+    print(f"{'='*60}")
+
+def scan_models():
+    print_separator("BẮT ĐẦU QUÉT FILE MODEL TRONG /app")
+    
+    # 1. In thư mục hiện tại
+    cwd = os.getcwd()
+    print(f"📍 Current Working Directory: {cwd}")
+    
+    # 2. Định nghĩa các đuôi file cần tìm
+    extensions = {'.pt', '.pth', '.ckpt', '.pkl', '.h5', '.json'}
+    found_count = 0
+    
+    # 3. Quét đệ quy từ thư mục gốc /app
+    # Nếu bạn chạy local không có /app thì thay bằng '.'
+    search_root = '/app' if os.path.exists('/app') else '.'
+    
+    print(f"🚀 Scanning root: {search_root} ...\n")
+
+    for root, dirs, files in os.walk(search_root):
+        for file in files:
+            # Lấy đuôi file
+            ext = os.path.splitext(file)[1].lower()
+            if ext in extensions:
+                full_path = os.path.join(root, file)
+                try:
+                    size_mb = os.path.getsize(full_path) / (1024 * 1024)
+                    print(f"  ✅ FOUND: {full_path}")
+                    print(f"     └─ Size: {size_mb:.2f} MB")
+                    found_count += 1
+                except Exception as e:
+                    print(f"  ⚠️  FOUND BUT ERROR: {full_path} ({str(e)})")
+
+    if found_count == 0:
+        print("\n❌ CẢNH BÁO: KHÔNG TÌM THẤY BẤT KỲ FILE MODEL NÀO!")
+    else:
+        print(f"\n✨ Tổng cộng tìm thấy: {found_count} file models.")
+
+    # 4. Kiểm tra cụ thể file đang bị lỗi của bạn
+    print_separator("KIỂM TRA CỤ THỂ FILE YOLO")
+    target_yolo = "/app/models/yolo/yolov5m.pt"
+    if os.path.exists(target_yolo):
+        sz = os.path.getsize(target_yolo) / (1024 * 1024)
+        print(f"🎯 YOLO STATUS: [OK] File tồn tại tại {target_yolo} ({sz:.2f} MB)")
+    else:
+        print(f"🎯 YOLO STATUS: [MISSING] Không thấy file tại {target_yolo}")
+        # Gợi ý fix
+        print("   👉 Gợi ý: Kiểm tra xem file có bị lưu nhầm vào /app/data/models/... không?")
+
+    print("="*60 + "\n")
+
+# Chạy ngay lập tức
+scan_models()
+# ==============================================================================
+
+# ... Code import Flask và các phần còn lại của bạn ở dưới này ...
 from flask import Flask, request, send_file, jsonify
 from werkzeug.utils import secure_filename
 import tempfile
@@ -67,19 +133,6 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
             'total_steps': 6,
             'message': 'Checking models...'
         }
-        
-        # Check if models exist, if not download
-        models_dir = Path('/app/models')
-        if not models_dir.exists() or not list(models_dir.glob('**/*.pth')):
-            logger.info("Models not found, downloading...")
-            result = subprocess.run(
-                ['python', '/app/download_models.py'],
-                capture_output=True,
-                text=True,
-                timeout=600  # 10 minutes timeout
-            )
-            if result.returncode != 0:
-                raise Exception(f"Model download failed: {result.stderr}")
         
         # Bước 1: Extract images
         processing_status[job_id] = {
@@ -379,8 +432,8 @@ def upload_videos():
         input_dir.mkdir(exist_ok=True)
         
         # Cập nhật đường dẫn lưu file vào trong folder input
-        video1_path = input_dir / 'video1.mp4'
-        video2_path = input_dir / 'video2.mp4'
+        video1_path = input_dir / 'camera1.mp4'
+        video2_path = input_dir / 'camera2.mp4'
         # --- [END FIX] ---
 
         # Store work directory

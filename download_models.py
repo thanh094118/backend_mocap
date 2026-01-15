@@ -17,19 +17,19 @@ BASE_DIR = Path(__file__).parent.absolute()
 MODELS = {
     "pose_hrnet": {
         "id": "1eZPkFzRN_TL_tUvfRTofiqWngproIirZ",
-        "output": "data/models/pose_hrnet_w48_384x288.pth"
+        "output": "models/pose_hrnet_w48_384x288.pth"
     },
     "pare_checkpoint": {
         "id": "1SRrH_ha122KD4z_PjJ0UDm_4U1ti97X-",
-        "output": "models/pare/data/pare/checkpoints/pare_w_3dpw_checkpoint.ckpt"
+        "output": "models/pare_w_3dpw_checkpoint.ckpt"
     },
     "smpl_neutral": {
         "id": "1Rza5kVxB7Lp5lP_o0r3LCpmk1LaepiI-",
-        "output": "models/pare/data/body_models/smpl/SMPL_NEUTRAL.pkl"
+        "output": "models/SMPL_NEUTRAL.pkl"
     },
     "yolov5": {
         "id": "1bv56ZN7tRIoPXPfeow26rBdC1NddLdS2",
-        "output": "models/yolo/yolov5m.pt"
+        "output": "models/yolov5m.pt"
     }
 }
 
