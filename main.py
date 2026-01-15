@@ -137,7 +137,7 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
         
         result = subprocess.run(
             ['python', '/app/myscript/merged_poses.py'],
-            capture_output=True, text=True, cwd=work_dir, timeout=300
+            capture_output=True, text=True, cwd=work_dir, timeout=600
         )
         if result.returncode != 0:
             raise Exception(f"Merge poses failed: {result.stderr}")
