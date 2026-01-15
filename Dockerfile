@@ -29,7 +29,7 @@ RUN apt-get clean && \
 
 # Set working directory
 WORKDIR /app
-
+ENV PYTHONPATH=/app
 # 2. Install PyTorch CPU-only version (Cài trước để tận dụng cache)
 RUN pip install --no-cache-dir \
     "numpy==1.23.5" \
