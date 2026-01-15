@@ -21,8 +21,8 @@ def try_to_download():
     cmd = 'unzip pare-github-data.zip -d {}'.format(model_dir)
     os.system(cmd)
 
-CFG = 'models/pare_w_3dpw_config.yaml'
-CKPT = 'models/pare_w_3dpw_checkpoint.ckpt'
+CFG = '/app/models/pare_w_3dpw_config.yaml'
+CKPT = '/app/models/pare_w_3dpw_checkpoint.ckpt'
 
 class PARE(nn.Module):
     def __init__(
