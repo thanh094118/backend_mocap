@@ -44,7 +44,7 @@ OH3D_ROOT = 'data/dataset_folders/3doh'
 
 JOINT_REGRESSOR_TRAIN_EXTRA = 'models/pare/data/J_regressor_extra.npy'
 JOINT_REGRESSOR_H36M = 'models/pare/data/J_regressor_h36m.npy'
-SMPL_MEAN_PARAMS = 'models/pare/data/smpl_mean_params.npz'
+SMPL_MEAN_PARAMS = '/app/models/pare/data/smpl_mean_params.npz'
 SMPL_MODEL_DIR = 'models/pare/data/body_models/smpl'
 
 COCO_OCCLUDERS_FILE = 'data/occlusion_augmentation/coco_train2014_occluders.pkl'
