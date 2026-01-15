@@ -1,0 +1,31 @@
+# ============================================
+# FILE 4: .dockerignore (Updated)
+# ============================================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.log
+.DS_Store
+.git/
+.gitignore
+*.md
+*.mp4
+*.avi
+*.zip
+output/
+temp_*/
+.vscode/
+.idea/
+*.egg-info/
+build/
+dist/
+
+# Model files will be downloaded during build
+data/models/*.pth
+models/pare/data/pare/checkpoints/*.ckpt
+models/pare/data/body_models/smpl/*.pkl
+models/yolo/*.pt
