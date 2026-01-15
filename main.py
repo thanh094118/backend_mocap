@@ -308,12 +308,16 @@ def upload_videos():
         work_dir = Path('/app/temp') / job_id
         work_dir.mkdir(parents=True, exist_ok=True)
         
+        # Tạo thư mục input
+        input_dir = work_dir / 'input'
+        input_dir.mkdir(exist_ok=True)
+        
         # Store work directory
         job_directories[job_id] = str(work_dir)
         
-        # Lưu videos
-        video1_path = work_dir / 'camera1.mp4'
-        video2_path = work_dir / 'camera2.mp4'
+        # Lưu videos vào thư mục input
+        video1_path = input_dir / 'camera1.mp4'
+        video2_path = input_dir / 'camera2.mp4'
         
         video1.save(str(video1_path))
         video2.save(str(video2_path))
