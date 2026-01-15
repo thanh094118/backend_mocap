@@ -96,8 +96,15 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
         result = subprocess.run(
             ['emc', '--data', '/app/config/datasets/svimage.yml', 
              '--exp', '/app/config/1v1p/hrnet_pare_finetune.yml', 
-             '--root', str(camera1_output), '--subs', 'images'],
-            capture_output=True, text=True, cwd=work_dir, timeout=1800
+             '--root', str(camera1_output), 
+             '--subs', 'images',
+             # === THÊM CÁC DÒNG NÀY ===
+             '--batch_size', '1',
+             '--num_workers', '0', 
+             '--opts', 'model.batch_size', '1', 'train.batch_size', '1'
+             # =========================
+            ],
+            capture_output=True, text=True, cwd=work_dir, timeout=3600
         )
         if result.returncode != 0:
             raise Exception(f"Camera1 failed: {result.stderr}")
@@ -114,8 +121,15 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
         result = subprocess.run(
             ['emc', '--data', '/app/config/datasets/svimage.yml', 
              '--exp', '/app/config/1v1p/hrnet_pare_finetune.yml', 
-             '--root', str(camera2_output), '--subs', 'images'],
-            capture_output=True, text=True, cwd=work_dir, timeout=1800
+             '--root', str(camera1_output), 
+             '--subs', 'images',
+             # === THÊM CÁC DÒNG NÀY ===
+             '--batch_size', '1',
+             '--num_workers', '0', 
+             '--opts', 'model.batch_size', '1', 'train.batch_size', '1'
+             # =========================
+            ],
+            capture_output=True, text=True, cwd=work_dir, timeout=3600
         )
         if result.returncode != 0:
             raise Exception(f"Camera2 failed: {result.stderr}")
