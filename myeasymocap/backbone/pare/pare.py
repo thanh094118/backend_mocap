@@ -22,7 +22,7 @@ def try_to_download():
     os.system(cmd)
 
 CFG = 'models/pare/data/pare/checkpoints/pare_w_3dpw_config.yaml'
-CKPT = 'models/pare/data/pare/checkpoints/pare_w_3dpw_checkpoint.ckpt'
+CKPT = 'models/pare_w_3dpw_checkpoint.ckpt'
 
 class PARE(nn.Module):
     def __init__(

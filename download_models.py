@@ -22,14 +22,6 @@ MODELS = {
     "pare_checkpoint": {
         "id": "1SRrH_ha122KD4z_PjJ0UDm_4U1ti97X-",
         "output": "models/pare_w_3dpw_checkpoint.ckpt"
-    },
-    "smpl_neutral": {
-        "id": "1Rza5kVxB7Lp5lP_o0r3LCpmk1LaepiI-",
-        "output": "models/SMPL_NEUTRAL.pkl"
-    },
-    "yolov5": {
-        "id": "1bv56ZN7tRIoPXPfeow26rBdC1NddLdS2",
-        "output": "models/yolov5m.pt"
     }
 }
 
