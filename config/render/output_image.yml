@@ -1,5 +1,0 @@
-output_module: easymocap.visualize.render_base.MIOutputs
-output_args:
-  out: none
-  mode: image
-  backend: pyrender

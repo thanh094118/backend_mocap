@@ -1,5 +1,0 @@
-ranges: [0, 99999, 1]
-result_module: easymocap.visualize.render_base.Results
-result_args:
-  path: none
-  rend_type: mesh
