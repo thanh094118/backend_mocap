@@ -8,14 +8,14 @@ args:
       args:
         model: yolov5m
         name: person
-        ckpt: models/yolo/yolov5m.pt
+        ckpt: /app/models/yolo/yolov5m.pt
     keypoints2d:
       module: myeasymocap.backbone.hrnet.myhrnet.MyHRNet
       key_from_data: [images, imgnames]
       key_from_previous: [bbox]
       key_keep: []
       args:
-        ckpt: models/pose_hrnet_w48_384x288.pth
+        ckpt: /app/models/pose_hrnet_w48_384x288.pth
         test_multiscale: False
         multiscale_factors: [0.8, 1.0, 1.2]
     filter_keypoints:
@@ -58,8 +58,8 @@ args:
     load_body_model: # 载入SMPL模型
       module: myeasymocap.io.model.SMPLLoader
       args:
-        model_path: models/pare/data/body_models/smpl/SMPL_NEUTRAL.pkl
-        regressor_path: models/J_regressor_body25.npy
+        model_path: /app/models/SMPL_NEUTRAL.pkl
+        regressor_path: /app/models/J_regressor_body25.npy
     init_translation: # 给定crop系下的姿态、2D关键点、相机参数，返回世界系下的人体姿态
       module: myeasymocap.operations.init.InitTranslation
       key_from_data: [keypoints, cameras, params] # 读入关键点、相机参数、SMPL参数
