@@ -312,8 +312,8 @@ def upload_videos():
         job_directories[job_id] = str(work_dir)
         
         # Lưu videos
-        video1_path = work_dir / 'video1.mp4'
-        video2_path = work_dir / 'video2.mp4'
+        video1_path = work_dir / 'camera1.mp4'
+        video2_path = work_dir / 'camera2.mp4'
         
         video1.save(str(video1_path))
         video2.save(str(video2_path))
