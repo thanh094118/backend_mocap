@@ -92,17 +92,21 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
         camera1_output.mkdir(parents=True, exist_ok=True)
         logger.info(f"   Input: {work_dir}/images/camera1/")
         logger.info(f"   Output: {camera1_output}")
-        
+
         result = subprocess.run(
-            ['emc', '--data', '/app/config/datasets/svimage.yml', 
-             '--exp', '/app/config/1v1p/hrnet_pare_finetune.yml', 
-             '--root', str(camera1_output), 
-             '--subs', 'images',
-             # === THÊM CÁC DÒNG NÀY ===
-             '--batch_size', '1',
-             '--num_workers', '0', 
-             '--opts', 'model.batch_size', '1', 'train.batch_size', '1'
-             # =========================
+            [
+                'emc', 
+                '--data', '/app/config/datasets/svimage.yml', 
+                '--exp', '/app/config/1v1p/hrnet_pare_finetune.yml', 
+                '--root', str(camera1_output), 
+                '--subs', 'images',
+                
+                # ===> ĐOẠN SỬA LẠI CHUẨN <===
+                '--num_workers', '0',  # Ép chạy đơn luồng (để tiết kiệm RAM)
+                '--opt_exp',           # Cờ chuẩn để sửa config
+                'batch_size', '1',     # Ghi đè batch_size chung
+                'model.batch_size', '1' # Ghi đè model batch_size (nếu có)
+                # ============================
             ],
             capture_output=True, text=True, cwd=work_dir, timeout=3600
         )
@@ -119,15 +123,19 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
         logger.info(f"   Output: {camera2_output}")
         
         result = subprocess.run(
-            ['emc', '--data', '/app/config/datasets/svimage.yml', 
-             '--exp', '/app/config/1v1p/hrnet_pare_finetune.yml', 
-             '--root', str(camera1_output), 
-             '--subs', 'images',
-             # === THÊM CÁC DÒNG NÀY ===
-             '--batch_size', '1',
-             '--num_workers', '0', 
-             '--opts', 'model.batch_size', '1', 'train.batch_size', '1'
-             # =========================
+            [
+                'emc', 
+                '--data', '/app/config/datasets/svimage.yml', 
+                '--exp', '/app/config/1v1p/hrnet_pare_finetune.yml', 
+                '--root', str(camera1_output), 
+                '--subs', 'images',
+                
+                # ===> ĐOẠN SỬA LẠI CHUẨN <===
+                '--num_workers', '0',  # Ép chạy đơn luồng (để tiết kiệm RAM)
+                '--opt_exp',           # Cờ chuẩn để sửa config
+                'batch_size', '1',     # Ghi đè batch_size chung
+                'model.batch_size', '1' # Ghi đè model batch_size (nếu có)
+                # ============================
             ],
             capture_output=True, text=True, cwd=work_dir, timeout=3600
         )
