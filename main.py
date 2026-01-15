@@ -104,9 +104,7 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
                 # ===> ĐOẠN SỬA LẠI CHUẨN <===
                 '--num_workers', '0',  # Ép chạy đơn luồng (để tiết kiệm RAM)
                 '--opt_exp',           # Cờ chuẩn để sửa config
-                'batch_size', '1',     # Ghi đè batch_size chung
-                'model.batch_size', '1' # Ghi đè model batch_size (nếu có)
-                # ============================
+                'batch_size', '1' # Ghi đè model batch_size (nếu có)
             ],
             capture_output=True, text=True, cwd=work_dir, timeout=3600
         )
@@ -133,9 +131,7 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
                 # ===> ĐOẠN SỬA LẠI CHUẨN <===
                 '--num_workers', '0',  # Ép chạy đơn luồng (để tiết kiệm RAM)
                 '--opt_exp',           # Cờ chuẩn để sửa config
-                'batch_size', '1',     # Ghi đè batch_size chung
-                'model.batch_size', '1' # Ghi đè model batch_size (nếu có)
-                # ============================
+                'batch_size', '1'
             ],
             capture_output=True, text=True, cwd=work_dir, timeout=3600
         )
