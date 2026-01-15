@@ -77,9 +77,15 @@ def process_pose_with_occlusion(pose_folder: str, occlusion_file: str, output_fo
         occlusion_file: Path to occlusion.json file
         output_folder: Output folder (if None, saves to same folder as pose_folder)
     """
-    # Load occlusion data
-    with open(occlusion_file, 'r') as f:
-        occlusion_data = json.load(f)
+    # Load occlusion data - handle missing file
+    if os.path.exists(occlusion_file):
+        with open(occlusion_file, 'r') as f:
+            occlusion_data = json.load(f)
+        print(f"Loaded occlusion data from: {occlusion_file}")
+    else:
+        occlusion_data = {}
+        print(f"Warning: Occlusion file not found at {occlusion_file}")
+        print("Continuing with empty occlusion data...")
     
     # Create output folder if needed
     if output_folder is None:
