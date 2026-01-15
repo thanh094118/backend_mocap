@@ -45,9 +45,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 4. Copy mã nguồn (Gộp các lệnh COPY lại cho gọn)
 COPY . .
 
-# 5. Cấp quyền cho script khởi động
-RUN chmod +x start.sh
-
 # 6. Install EasyMocap (FIX QUAN TRỌNG: dùng pip install thay vì setup.py develop)
 # Điều này giúp importlib tìm thấy metadata của gói easymocap
 RUN pip install .
@@ -69,4 +66,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=600s --retries=3 \
     CMD curl -f http://localhost:5000/ || exit 1
 
 # Start command
-CMD ["./start.sh"]
+CMD ["gunicorn", "main:app", "--bind", "0.0.0.0:5000", "--timeout", "900", "--workers", "1", "--worker-class", "sync", "--worker-tmp-dir", "/dev/shm"]
