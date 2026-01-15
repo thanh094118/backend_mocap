@@ -23,9 +23,3 @@ temp_*/
 *.egg-info/
 build/
 dist/
-
-# Model files will be downloaded during build
-data/models/*.pth
-models/pare/data/pare/checkpoints/*.ckpt
-models/pare/data/body_models/smpl/*.pkl
-models/yolo/*.pt
