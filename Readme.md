@@ -1,6 +1,5 @@
 # ============================================
 # FILE 6: README_MODELS.md
-# ============================================
 # Model Files Setup
 
 ## Models Downloaded from Google Drive
