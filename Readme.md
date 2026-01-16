@@ -40,7 +40,6 @@ gdown 1Rza5kVxB7Lp5lP_o0r3LCpmk1LaepiI- -O models/pare/data/body_models/smpl/SMP
 gdown 1bv56ZN7tRIoPXPfeow26rBdC1NddLdS2 -O models/yolo/yolov5m.pt
 ```
 
-## Why Not Commit Models to Git?
 
 - **Size**: Total ~840MB - exceeds GitHub's limits
 - **Storage**: Uses Git LFS quota
