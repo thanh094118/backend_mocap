@@ -50,15 +50,15 @@ def cleanup_old_jobs():
     except Exception as e:
         logger.error(f"❌ Cleanup error: {e}")
 
-def cleanup_job_directory(job_id):
-    """Xóa thư mục của 1 job cụ thể"""
-    job_dir = TEMP_DIR / job_id
-    if job_dir.exists():
-        try:
-            shutil.rmtree(job_dir)
-            logger.info(f"🗑️  Cleaned up job directory: {job_id}")
-        except Exception as e:
-            logger.error(f"❌ Failed to cleanup {job_id}: {e}")
+# def cleanup_job_directory(job_id):
+#     """Xóa thư mục của 1 job cụ thể"""
+#     job_dir = TEMP_DIR / job_id
+#     if job_dir.exists():
+#         try:
+#             shutil.rmtree(job_dir)
+#             logger.info(f"🗑️  Cleaned up job directory: {job_id}")
+#         except Exception as e:
+#             logger.error(f"❌ Failed to cleanup {job_id}: {e}")
 
 def run_pipeline(job_id, video1_path, video2_path, work_dir):
     """Pipeline xử lý video"""
