@@ -79,13 +79,18 @@ def process_pose_with_occlusion(pose_folder: str, occlusion_file: str, output_fo
     """
     # Load occlusion data - handle missing file
     if os.path.exists(occlusion_file):
-        with open(occlusion_file, 'r') as f:
-            occlusion_data = json.load(f)
-        print(f"Loaded occlusion data from: {occlusion_file}")
+        try:
+            with open(occlusion_file, 'r') as f:
+                occlusion_data = json.load(f)
+            print(f"✓ Loaded occlusion data from: {occlusion_file}")
+        except json.JSONDecodeError:
+            print(f"Warning: Invalid JSON in {occlusion_file}")
+            print("Continuing with empty occlusion data...")
+            occlusion_data = {}
     else:
         occlusion_data = {}
-        print(f"Warning: Occlusion file not found at {occlusion_file}")
-        print("Continuing with empty occlusion data...")
+        print(f"ℹ Occlusion file not found at: {occlusion_file}")
+        print("Continuing with empty occlusion data (no occlusion information will be added)...")
     
     # Create output folder if needed
     if output_folder is None:
@@ -95,6 +100,10 @@ def process_pose_with_occlusion(pose_folder: str, occlusion_file: str, output_fo
     # Get all JSON files in pose folder
     pose_files = sorted(Path(pose_folder).glob('*.json'))
     
+    if not pose_files:
+        print(f"Warning: No JSON files found in {pose_folder}")
+        return
+    
     for pose_file in pose_files:
         # Get frame name (e.g., "000006.jpg" from "000006.json")
         frame_name = pose_file.stem + '.jpg'
@@ -103,45 +112,50 @@ def process_pose_with_occlusion(pose_folder: str, occlusion_file: str, output_fo
         with open(pose_file, 'r') as f:
             pose_data = json.load(f)
         
-        # Determine which bones are wrong in each camera
-        wrong_bones_per_camera = {}
-        
-        for camera, limbs in occlusion_data.items():
-            wrong_bones = set()
+        # Only process occlusion data if it exists and has cameras
+        if occlusion_data:
+            # Determine which bones are wrong in each camera
+            wrong_bones_per_camera = {}
             
-            for limb, frame_list in limbs.items():
-                if frame_name in frame_list:
-                    # This limb is occluded/wrong in this frame
-                    bones = get_all_bones_from_limb(limb)
-                    for bone in bones:
-                        wrong_bones.add(tuple(bone))
+            for camera, limbs in occlusion_data.items():
+                wrong_bones = set()
+                
+                for limb, frame_list in limbs.items():
+                    if frame_name in frame_list:
+                        # This limb is occluded/wrong in this frame
+                        bones = get_all_bones_from_limb(limb)
+                        for bone in bones:
+                            wrong_bones.add(tuple(bone))
+                
+                wrong_bones_per_camera[camera] = wrong_bones
             
-            wrong_bones_per_camera[camera] = wrong_bones
-        
-        # Determine camera-specific correctness
-        cameras = list(occlusion_data.keys())
-        if len(cameras) == 2:
-            camera1, camera2 = cameras[0], cameras[1]
-            
-            # Bones wrong only in camera1 (correct only in camera2)
-            only_camera2_correct = wrong_bones_per_camera[camera1] - wrong_bones_per_camera[camera2]
-            
-            # Bones wrong only in camera2 (correct only in camera1)
-            only_camera2_wrong = wrong_bones_per_camera[camera2] - wrong_bones_per_camera[camera1]
-            
-            # Format bone names for output
-            pose_data[f"only_{camera2}_correct"] = sorted([
-                format_bone_name(list(bone)) for bone in only_camera2_correct
-            ])
-            pose_data[f"only_{camera2}_wrong"] = sorted([
-                format_bone_name(list(bone)) for bone in only_camera2_wrong
-            ])
+            # Determine camera-specific correctness
+            cameras = list(occlusion_data.keys())
+            if len(cameras) >= 2:
+                camera1, camera2 = cameras[0], cameras[1]
+                
+                # Bones wrong only in camera1 (correct only in camera2)
+                only_camera2_correct = wrong_bones_per_camera[camera1] - wrong_bones_per_camera[camera2]
+                
+                # Bones wrong only in camera2 (correct only in camera1)
+                only_camera2_wrong = wrong_bones_per_camera[camera2] - wrong_bones_per_camera[camera1]
+                
+                # Format bone names for output
+                pose_data[f"only_{camera2}_correct"] = sorted([
+                    format_bone_name(list(bone)) for bone in only_camera2_correct
+                ])
+                pose_data[f"only_{camera2}_wrong"] = sorted([
+                    format_bone_name(list(bone)) for bone in only_camera2_wrong
+                ])
         
         # Save merged data with custom formatting
         output_file = Path(output_folder) / pose_file.name
         save_pose_json(pose_data, output_file)
         
         print(f"Processed: {pose_file.name}")
+    
+    print(f"\n✓ Successfully processed {len(pose_files)} files")
+    print(f"Output saved to: {output_folder}")
 
 def save_pose_json(data: dict, filepath: str):
     """
