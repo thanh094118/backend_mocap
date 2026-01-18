@@ -120,7 +120,7 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
                 'emc', 
                 '--data', '/app/config/datasets/svimage.yml', 
                 '--exp', '/app/config/1v1p/hrnet_pare_finetune.yml', 
-                '--root', str(camera1_output), 
+                '--root', str(camera2_output), 
                 '--subs', 'images',
             ],
             capture_output=True, text=True, cwd=work_dir, timeout=3600
