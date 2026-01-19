@@ -1,114 +1,106 @@
-import cv2
-import numpy as np
-import os
-import glob
 import json
-from tqdm import tqdm
+import os
+from pathlib import Path
 
-# --- CẤU HÌNH ĐƯỜNG DẪN ---
-CAM1_FOLDER = 'output/camera1/sv1p/render'
-CAM2_FOLDER = 'output/camera2/sv1p/render'
-OUTPUT_FILE = 'output/occlusion.json' # Đã sửa đường dẫn output
+# Cấu hình đường dẫn
+CAM1_FOLDER = 'output/camera1/sv1p/confident'
+CAM2_FOLDER = 'output/camera2/sv1p/confident'
+OUTPUT_FOLDER = 'output/confident'
 
-# --- THÔNG SỐ KỸ THUẬT ---
-TOLERANCE = 1
-MIN_PIXEL_THRESHOLD = 0
-
-# --- CẤU HÌNH MÀU ---
-PART_DEFINITIONS = {
-    "Left Leg": { "color_rgb": np.array([1.0, 0.0, 1.0]) },   # Magenta
-    "Right Leg": { "color_rgb": np.array([0.0, 1.0, 1.0]) },  # Cyan
-    "Left Arm": { "color_rgb": np.array([1.0, 1.0, 0.0]) },   # Blue (theo logic cũ của bạn)
-    "Right Arm": { "color_rgb": np.array([0.0, 0.0, 1.0]) }  # Yellow (theo logic cũ của bạn)
+# Bảng ánh xạ joint_id sang tên bone
+JOINT_MAPPING = {
+    3: "right_shoulder_elbow",
+    4: "right_elbow_hand",
+    6: "left_shoulder_elbow",
+    7: "left_elbow_hand",
+    10: "right_hip_knee",
+    11: "right_knee_ankle",
+    13: "left_hip_knee",
+    14: "left_knee_ankle"
 }
 
-def detect_occluded_parts(img_path):
-    """Trả về danh sách các bộ phận bị che trong 1 ảnh"""
-    img = cv2.imread(img_path)
-    if img is None: return []
-
-    occluded_list = []
-    
-    for part_name, data in PART_DEFINITIONS.items():
-        # RGB -> BGR
-        target_rgb = (data["color_rgb"] * 255).astype(int)
-        target_bgr = np.array([target_rgb[2], target_rgb[1], target_rgb[0]])
-        
-        # Masking
-        lower = np.clip(target_bgr - TOLERANCE, 0, 255)
-        upper = np.clip(target_bgr + TOLERANCE, 0, 255)
-        mask = cv2.inRange(img, lower, upper)
-        
-        count = cv2.countNonZero(mask)
-        
-        if count <= MIN_PIXEL_THRESHOLD:
-            occluded_list.append(part_name)
-            
-    return occluded_list
-
-def get_filenames(folder_path):
-    """Lấy danh sách tên file (basename) trong folder"""
-    extensions = ['*.jpg', '*.png', '*.jpeg']
-    files = []
-    for ext in extensions:
-        files.extend(glob.glob(os.path.join(folder_path, ext)))
-    # Chỉ lấy tên file (ví dụ: '0001.jpg') để so sánh
-    return set([os.path.basename(f) for f in files])
-
-def process_and_aggregate():
-    # 1. Tạo thư mục output nếu chưa có
-    output_dir = os.path.dirname(OUTPUT_FILE)
-    if output_dir and not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-        print(f"Created directory: {output_dir}")
-
-    # 2. Khởi tạo data
-    final_data = {
-        "camera1": { key: [] for key in PART_DEFINITIONS.keys() },
-        "camera2": { key: [] for key in PART_DEFINITIONS.keys() }
-    }
-
-    # 3. Lấy danh sách file và tính toán số lượng chung
-    files_cam1_set = get_filenames(CAM1_FOLDER)
-    files_cam2_set = get_filenames(CAM2_FOLDER)
-
-    # Lấy danh sách file tồn tại ở CẢ 2 folder (Intersection)
-    # Cách này an toàn hơn là cắt list, vì nó đảm bảo cùng tên file (cùng timestamp/frame)
-    common_files = sorted(list(files_cam1_set & files_cam2_set))
-
-    if not common_files:
-        print("Không tìm thấy file chung nào giữa 2 thư mục hoặc thư mục rỗng.")
-        return
-
-    print(f"Cam 1 total: {len(files_cam1_set)}")
-    print(f"Cam 2 total: {len(files_cam2_set)}")
-    print(f"Processing {len(common_files)} common images...")
-
-    # 4. Vòng lặp xử lý
-    for filename in tqdm(common_files, desc="Processing"):
-        path1 = os.path.join(CAM1_FOLDER, filename)
-        path2 = os.path.join(CAM2_FOLDER, filename)
-        
-        # --- XỬ LÝ CAMERA 1 ---
-        occluded_parts_1 = detect_occluded_parts(path1)
-        for part in occluded_parts_1:
-            final_data["camera1"][part].append(filename)
-
-        # --- XỬ LÝ CAMERA 2 ---
-        # Không cần check exists nữa vì đã lọc qua common_files
-        occluded_parts_2 = detect_occluded_parts(path2)
-        for part in occluded_parts_2:
-            final_data["camera2"][part].append(filename)
-
-    # 5. Lưu file JSON
+def read_json_file(filepath):
+    """Đọc file JSON và trả về dictionary với bone name làm key"""
     try:
-        with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
-            json.dump(final_data, f, ensure_ascii=False, indent=4)
+        with open(filepath, 'r') as f:
+            data = json.load(f)
         
-        print(f"Successfully saved to: {OUTPUT_FILE}")
+        result = {}
+        for item in data:
+            joint_id = item['joint_id']
+            if joint_id in JOINT_MAPPING:
+                bone_name = JOINT_MAPPING[joint_id]
+                result[bone_name] = item
+        return result
+    except FileNotFoundError:
+        return {}
+    except json.JSONDecodeError:
+        print(f"Lỗi đọc JSON: {filepath}")
+        return {}
 
-    except Exception as e:
-        print(f"Error writing file: {e}")
+def merge_camera_data(cam1_data, cam2_data):
+    """Gộp dữ liệu từ 2 camera"""
+    result = {
+        "only_camera2_correct": [],
+        "only_camera2_wrong": []
+    }
+    
+    # Lấy tất cả bone names từ cả 2 camera
+    all_bones = set(cam1_data.keys()) | set(cam2_data.keys())
+    
+    for bone_name in sorted(all_bones):
+        # Nếu chỉ có cam1
+        if bone_name in cam1_data and bone_name not in cam2_data:
+            result["only_camera2_correct"].append(bone_name)
+        # Nếu chỉ có cam2
+        elif bone_name not in cam1_data and bone_name in cam2_data:
+            result["only_camera2_wrong"].append(bone_name)
+        # Nếu cả 2 đều có, ưu tiên theo logic của bạn
+        # (có thể điều chỉnh logic này nếu cần)
+        else:
+            result["only_camera2_correct"].append(bone_name)
+    
+    return result
+
+def process_files():
+    """Xử lý tất cả các file JSON"""
+    # Tạo thư mục output nếu chưa có
+    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+    
+    # Lấy danh sách tất cả file JSON từ cả 2 thư mục
+    cam1_files = set()
+    cam2_files = set()
+    
+    if os.path.exists(CAM1_FOLDER):
+        cam1_files = {f for f in os.listdir(CAM1_FOLDER) if f.endswith('.json')}
+    
+    if os.path.exists(CAM2_FOLDER):
+        cam2_files = {f for f in os.listdir(CAM2_FOLDER) if f.endswith('.json')}
+    
+    all_files = cam1_files | cam2_files
+    
+    print(f"Tìm thấy {len(all_files)} file cần xử lý")
+    
+    # Xử lý từng file
+    for filename in sorted(all_files):
+        cam1_path = os.path.join(CAM1_FOLDER, filename)
+        cam2_path = os.path.join(CAM2_FOLDER, filename)
+        
+        # Đọc dữ liệu từ cả 2 camera
+        cam1_data = read_json_file(cam1_path)
+        cam2_data = read_json_file(cam2_path)
+        
+        # Gộp dữ liệu
+        merged_data = merge_camera_data(cam1_data, cam2_data)
+        
+        # Ghi file output
+        output_path = os.path.join(OUTPUT_FOLDER, filename)
+        with open(output_path, 'w') as f:
+            json.dump(merged_data, f, indent=2)
+        
+        print(f"Đã xử lý: {filename}")
+    
+    print(f"\nHoàn thành! Kết quả được lưu tại: {OUTPUT_FOLDER}")
 
 if __name__ == "__main__":
-    process_and_aggregate()
+    process_files()
