@@ -142,18 +142,29 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
             cwd=work_dir, stage_name='Align'
         )
 
-        # --- Packaging ---
+        # --- Packaging - Nén cả 2 folder ---
         logger.info("📦 Zipping results...")
-        output_folder = work_dir / 'output' / 'output_final'
+        output_dir = work_dir / 'output'
+        output_final_folder = output_dir / 'output_final'
+        merged_total_folder = output_dir / 'merged_total'
         zip_path = work_dir / 'results.zip'
         
-        if not output_folder.exists():
-            raise Exception("Output folder missing")
+        # Kiểm tra cả 2 folder có tồn tại
+        if not output_final_folder.exists():
+            raise Exception("output_final folder missing")
+        if not merged_total_folder.exists():
+            raise Exception("merged_total folder missing")
 
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            for file_path in output_folder.rglob('*'):
+            # Nén folder output_final
+            for file_path in output_final_folder.rglob('*'):
                 if file_path.is_file():
-                    zipf.write(file_path, file_path.relative_to(output_folder))
+                    zipf.write(file_path, Path('output_final') / file_path.relative_to(output_final_folder))
+            
+            # Nén folder merged_total
+            for file_path in merged_total_folder.rglob('*'):
+                if file_path.is_file():
+                    zipf.write(file_path, Path('merged_total') / file_path.relative_to(merged_total_folder))
 
         with job_lock:
             current_job['status'] = 'completed'
@@ -171,7 +182,7 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
 
 # --- API ENDPOINTS ---
 
-@app.route('/api/process', methods=['POST'])
+@app.route('/api/upload', methods=['POST'])
 def process_videos():
     global current_job
     
