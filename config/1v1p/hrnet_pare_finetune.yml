@@ -23,7 +23,7 @@ args:
       key_from_data: [images, imgnames]
       key_from_previous: [keypoints]
       args:
-        confidence_threshold: 0.0
+        confidence_threshold: 0.5
         name: confident 
     vis2d:
       module: myeasymocap.io.vis.Vis2D
