@@ -20,10 +20,11 @@ args:
         multiscale_factors: [0.8, 1.0, 1.2]
     filter_keypoints:
       module: myeasymocap.operations.filter.FilterKeypoints
-      key_from_data: []
+      key_from_data: [images, imgnames]
       key_from_previous: [keypoints]
       args:
         confidence_threshold: 0.0
+        name: confident 
     vis2d:
       module: myeasymocap.io.vis.Vis2D
       skip: False
