@@ -16,7 +16,8 @@ KEYPOINT_MAPPING = {
     11: "right_ankle",
     12: "left_hip",
     13: "left_knee",
-    14: "left_ankle"
+    14: "left_ankle",
+    1: "neck"
 }
 
 def process_json_file(file_path):
