@@ -1,100 +1,20 @@
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Dict, List
 
-def get_bone_from_limb(limb: str, part: str) -> List[str]:
+def process_pose_with_confident(pose_folder: str, confident_folder: str, output_folder: str = None):
     """
-    Convert limb name to bone pairs.
+    Process pose JSON files and merge with confident information.
     
     Args:
-        limb: "Left Arm", "Right Arm", "Left Leg", "Right Leg"
-        part: "upper" or "lower" to specify which bone pair
-    
-    Returns:
-        List of joint names forming the bone
+        pose_folder: Folder containing pose JSON files (e.g., "output/merged_poses")
+        confident_folder: Folder containing confident JSON files (e.g., "output/confident")
+        output_folder: Output folder (if None, saves to pose_folder with "_final" suffix)
     """
-    limb_lower = limb.lower()
-    
-    if "arm" in limb_lower:
-        if "left" in limb_lower:
-            if part == "upper":
-                return ["left_shoulder", "left_elbow"]
-            else:  # lower
-                return ["left_elbow", "left_hand"]
-        else:  # right
-            if part == "upper":
-                return ["right_shoulder", "right_elbow"]
-            else:  # lower
-                return ["right_elbow", "right_hand"]
-    else:  # leg
-        if "left" in limb_lower:
-            if part == "upper":
-                return ["left_hip", "left_knee"]
-            else:  # lower
-                return ["left_knee", "left_ankle"]
-        else:  # right
-            if part == "upper":
-                return ["right_hip", "right_knee"]
-            else:  # lower
-                return ["right_knee", "right_ankle"]
-
-def get_all_bones_from_limb(limb: str) -> List[List[str]]:
-    """Get both upper and lower bone pairs for a limb."""
-    return [
-        get_bone_from_limb(limb, "upper"),
-        get_bone_from_limb(limb, "lower")
-    ]
-
-def format_bone_name(bone: List[str]) -> str:
-    """Format bone pair as 'left/right_joint1_joint2'."""
-    # Extract prefix (left_ or right_) and joint names
-    joint1_full = bone[0]
-    joint2_full = bone[1]
-    
-    # Get prefix (left_ or right_)
-    if joint1_full.startswith("left_"):
-        prefix = "left_"
-        joint1 = joint1_full[5:]  # Remove "left_"
-        joint2 = joint2_full[5:]  # Remove "left_"
-    elif joint1_full.startswith("right_"):
-        prefix = "right_"
-        joint1 = joint1_full[6:]  # Remove "right_"
-        joint2 = joint2_full[6:]  # Remove "right_"
-    else:
-        joint1 = joint1_full
-        joint2 = joint2_full
-        prefix = ""
-    
-    return f"{prefix}{joint1}_{joint2}"
-
-def process_pose_with_occlusion(pose_folder: str, occlusion_file: str, output_folder: str = None):
-    """
-    Process pose JSON files and merge with occlusion information.
-    
-    Args:
-        pose_folder: Folder containing pose JSON files
-        occlusion_file: Path to occlusion.json file
-        output_folder: Output folder (if None, saves to same folder as pose_folder)
-    """
-    # Load occlusion data - handle missing file
-    if os.path.exists(occlusion_file):
-        try:
-            with open(occlusion_file, 'r') as f:
-                occlusion_data = json.load(f)
-            print(f"✓ Loaded occlusion data from: {occlusion_file}")
-        except json.JSONDecodeError:
-            print(f"Warning: Invalid JSON in {occlusion_file}")
-            print("Continuing with empty occlusion data...")
-            occlusion_data = {}
-    else:
-        occlusion_data = {}
-        print(f"ℹ Occlusion file not found at: {occlusion_file}")
-        print("Continuing with empty occlusion data (no occlusion information will be added)...")
-    
     # Create output folder if needed
     if output_folder is None:
-        output_folder = pose_folder
+        output_folder = pose_folder + "_final"
     os.makedirs(output_folder, exist_ok=True)
     
     # Get all JSON files in pose folder
@@ -104,57 +24,49 @@ def process_pose_with_occlusion(pose_folder: str, occlusion_file: str, output_fo
         print(f"Warning: No JSON files found in {pose_folder}")
         return
     
+    processed_count = 0
+    
     for pose_file in pose_files:
-        # Get frame name (e.g., "000006.jpg" from "000006.json")
-        frame_name = pose_file.stem + '.jpg'
-        
         # Load pose data
         with open(pose_file, 'r') as f:
             pose_data = json.load(f)
         
-        # Only process occlusion data if it exists and has cameras
-        if occlusion_data:
-            # Determine which bones are wrong in each camera
-            wrong_bones_per_camera = {}
-            
-            for camera, limbs in occlusion_data.items():
-                wrong_bones = set()
+        # Try to load corresponding confident file
+        confident_file = Path(confident_folder) / pose_file.name
+        
+        if os.path.exists(confident_file):
+            try:
+                with open(confident_file, 'r') as f:
+                    confident_data = json.load(f)
                 
-                for limb, frame_list in limbs.items():
-                    if frame_name in frame_list:
-                        # This limb is occluded/wrong in this frame
-                        bones = get_all_bones_from_limb(limb)
-                        for bone in bones:
-                            wrong_bones.add(tuple(bone))
+                # Add confident data to pose data
+                if "only_camera2_correct" in confident_data:
+                    pose_data["only_camera2_correct"] = confident_data["only_camera2_correct"]
+                else:
+                    pose_data["only_camera2_correct"] = []
                 
-                wrong_bones_per_camera[camera] = wrong_bones
-            
-            # Determine camera-specific correctness
-            cameras = list(occlusion_data.keys())
-            if len(cameras) >= 2:
-                camera1, camera2 = cameras[0], cameras[1]
-                
-                # Bones wrong only in camera1 (correct only in camera2)
-                only_camera2_correct = wrong_bones_per_camera[camera1] - wrong_bones_per_camera[camera2]
-                
-                # Bones wrong only in camera2 (correct only in camera1)
-                only_camera2_wrong = wrong_bones_per_camera[camera2] - wrong_bones_per_camera[camera1]
-                
-                # Format bone names for output
-                pose_data[f"only_{camera2}_correct"] = sorted([
-                    format_bone_name(list(bone)) for bone in only_camera2_correct
-                ])
-                pose_data[f"only_{camera2}_wrong"] = sorted([
-                    format_bone_name(list(bone)) for bone in only_camera2_wrong
-                ])
+                if "only_camera2_wrong" in confident_data:
+                    pose_data["only_camera2_wrong"] = confident_data["only_camera2_wrong"]
+                else:
+                    pose_data["only_camera2_wrong"] = []
+                    
+            except json.JSONDecodeError:
+                print(f"Warning: Invalid JSON in {confident_file}")
+                pose_data["only_camera2_correct"] = []
+                pose_data["only_camera2_wrong"] = []
+        else:
+            # No confident data available
+            pose_data["only_camera2_correct"] = []
+            pose_data["only_camera2_wrong"] = []
         
         # Save merged data with custom formatting
         output_file = Path(output_folder) / pose_file.name
         save_pose_json(pose_data, output_file)
         
+        processed_count += 1
         print(f"Processed: {pose_file.name}")
     
-    print(f"\n✓ Successfully processed {len(pose_files)} files")
+    print(f"\n✓ Successfully processed {processed_count} files")
     print(f"Output saved to: {output_folder}")
 
 def save_pose_json(data: dict, filepath: str):
@@ -171,7 +83,7 @@ def save_pose_json(data: dict, filepath: str):
         
         # Write camera data
         for i, camera in enumerate(cameras):
-            f.write(f'    "{camera}": {{\n')
+            f.write(f'  "{camera}": {{\n')
             camera_data = data[camera]
             joints = list(camera_data.keys())
             
@@ -180,30 +92,30 @@ def save_pose_json(data: dict, filepath: str):
                 coords_str = json.dumps(coords)
                 
                 if j < len(joints) - 1:
-                    f.write(f'        "{joint}": {coords_str},\n')
+                    f.write(f'    "{joint}": {coords_str},\n')
                 else:
-                    f.write(f'        "{joint}": {coords_str}\n')
+                    f.write(f'    "{joint}": {coords_str}\n')
             
             if i < len(cameras) - 1 or metadata_keys:
-                f.write('    },\n')
+                f.write('  },\n')
             else:
-                f.write('    }\n')
+                f.write('  }\n')
         
         # Write metadata (only_camera2_correct, only_camera2_wrong)
         for i, key in enumerate(metadata_keys):
-            value = json.dumps(data[key], indent=4)
+            value_str = json.dumps(data[key])
             
             if i < len(metadata_keys) - 1:
-                f.write(f'    "{key}": {value},\n')
+                f.write(f'  "{key}": {value_str},\n')
             else:
-                f.write(f'    "{key}": {value}\n')
+                f.write(f'  "{key}": {value_str}\n')
         
         f.write('}\n')
 
 if __name__ == "__main__":
-    # Example usage
+    # Configuration
     pose_folder = "output/merged_poses"  # Folder containing pose JSON files
-    occlusion_file = "output/occlusion.json"  # Path to occlusion.json
-    output_folder = "output/merged_total"  # Optional: specify different output folder
+    confident_folder = "output/confident"  # Folder containing confident JSON files
+    output_folder = "output/merged_total"  # Output folder
     
-    process_pose_with_occlusion(pose_folder, occlusion_file, output_folder)
+    process_pose_with_confident(pose_folder, confident_folder, output_folder)
