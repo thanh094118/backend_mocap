@@ -6,7 +6,7 @@
 1. **HRNet Pose Model** (`data/models/pose_hrnet_w48_384x288.pth`)
    - Size: ~200MB
    - Source: Google Drive
-  
+   
 2. **PARE Checkpoint** (`models/pare/data/pare/checkpoints/pare_w_3dpw_checkpoint.ckpt`)
    - Size: ~500MB
    - Source: Google Drive
