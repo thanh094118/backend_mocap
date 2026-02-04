@@ -10,7 +10,7 @@
 2. **PARE Checkpoint** (`models/pare/data/pare/checkpoints/pare_w_3dpw_checkpoint.ckpt`)
    - Size: ~500MB
    - Source: Google Drive
-
+ 
 3. **SMPL Neutral Model** (`models/pare/data/body_models/smpl/SMPL_NEUTRAL.pkl`)
    - Size: ~100MB
    - Source: Google Drive
