@@ -3,7 +3,6 @@
 
 ## Models Downloaded from Google Drive
 
-
 1. **HRNet Pose Model** (`data/models/pose_hrnet_w48_384x288.pth`)
    - Size: ~200MB
    - Source: Google Drive
