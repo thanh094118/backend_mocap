@@ -53,25 +53,43 @@ def run_command(command, cwd, stage_name):
     """Hàm chạy lệnh chung để tối giản code"""
     try:
         logger.info(f"⏳ [{stage_name}] Processing...")
-        # Capture output=False để không spam log, chỉ check returncode
+        
         result = subprocess.run(
-            command, 
-            cwd=cwd, 
-            capture_output=True, 
-            text=True, 
+            command,
+            cwd=cwd,
+            capture_output=True,
+            text=True,
             timeout=3600
         )
+
         if result.returncode != 0:
-            # Chỉ lấy dòng lỗi cuối cùng hoặc tin nhắn lỗi ngắn gọn
-            error_msg = result.stderr.strip().split('\n')[-1] if result.stderr else "Unknown error"
-            raise Exception(f"Exit code {result.returncode}: {error_msg}")
-            
+            logger.error("=" * 80)
+            logger.error(f"[{stage_name}] COMMAND FAILED")
+            logger.error(f"Command: {' '.join(command)}")
+            logger.error(f"Return code: {result.returncode}")
+
+            logger.error("----- STDOUT -----")
+            logger.error(result.stdout if result.stdout else "None")
+
+            logger.error("----- STDERR -----")
+            logger.error(result.stderr if result.stderr else "None")
+            logger.error("=" * 80)
+
+            raise Exception(
+                f"Exit code {result.returncode}\n"
+                f"STDERR:\n{result.stderr}"
+            )
+
         logger.info(f"✅ [{stage_name}] Completed")
         return True
-    except subprocess.TimeoutExpired:
-        raise Exception("Timeout")
+
+    except subprocess.TimeoutExpired as e:
+        logger.error(f"[{stage_name}] TIMEOUT after 3600s")
+        raise Exception(f"Timeout: {e}")
+
     except Exception as e:
-        raise e
+        logger.error(f"[{stage_name}] Exception occurred: {str(e)}")
+        raise
 
 def run_pipeline(job_id, video1_path, video2_path, work_dir):
     global current_job
