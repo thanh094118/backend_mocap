@@ -89,15 +89,43 @@ def run_pipeline(job_id, video1_path, video2_path, work_dir):
 
         # --- Stage 2: Camera 1 ---
         stage = 'Stage 2/6: Processing Camera 1'
-        with job_lock: current_job['stage'] = stage
+        with job_lock:
+            current_job['stage'] = stage
         
         camera1_out = work_dir / 'output' / 'camera1'
-        run_command(
-            ['emc', '--data', '/app/config/datasets/svimage.yml', 
-             '--exp', '/app/config/1v1p/hrnet_pare_finetune.yml', 
-             '--root', str(camera1_out), '--subs', 'images'],
-            cwd=work_dir, stage_name='Camera 1'
-        )
+        
+        try:
+            print("\n" + "="*80)
+            print(f"[START] {stage}")
+            print("Working directory:", work_dir)
+            print("Output path:", camera1_out)
+            print("="*80)
+        
+            run_command(
+                [
+                    'emc',
+                    '--data', '/app/config/datasets/svimage.yml',
+                    '--exp', '/app/config/1v1p/hrnet_pare_finetune.yml',
+                    '--root', str(camera1_out),
+                    '--subs', 'images'
+                ],
+                cwd=work_dir,
+                stage_name='Camera 1'
+            )
+        
+            print(f"[SUCCESS] {stage} finished")
+        
+        except Exception as e:
+            import traceback
+            print("\n" + "="*80)
+            print(f"[ERROR] {stage} crashed")
+            print("Error type:", type(e))
+            print("Error message:", str(e))
+            print("\nFull traceback:")
+            traceback.print_exc()
+            print("="*80)
+        
+            raise  # giữ nguyên behavior để job fail
 
         # --- Stage 3: Camera 2 ---
         stage = 'Stage 3/6: Processing Camera 2'
