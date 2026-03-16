@@ -1,53 +1,23 @@
-# FILE 6: README_MODELS.md
-# Model Files Setup
+## Project Overview
 
-## Models Downloaded from Google Drive
+This repository focuses on building and optimizing a **human motion capture pipeline based on EasyMocap** without modifying the underlying AI models.
 
-1. **HRNet Pose Model** (`data/models/pose_hrnet_w48_384x288.pth`)
-   - Size: ~200MB
-   - Source: Google Drive
-   
-2. **PARE Checkpoint** (`models/pare/data/pare/checkpoints/pare_w_3dpw_checkpoint.ckpt`)
-   - Size: ~500MB
-   - Source: Google Drive
- 
-3. **SMPL Neutral Model** (`models/pare/data/body_models/smpl/SMPL_NEUTRAL.pkl`)
-   - Size: ~100MB
-   - Source: Google Drive
+### Scope
+- Utilize tools and modules from the official **EasyMocap** framework.
+- Adapt and optimize the processing pipeline to fit custom datasets.
+- Develop additional scripts to process and analyze model outputs.
 
-4. **YOLOv5 Model** (`models/yolo/yolov5m.pt`)
-   - Size: ~40MB
-   - Source: Google Drive
+### Key Tasks
+- Run and configure EasyMocap pipelines for motion capture tasks.
+- Work with outputs such as **keypoints, poses, and reconstructed 3D data**.
+- Implement **post-processing methods** to reduce common errors in **monocular reconstruction**.
+- Integrate additional logic to improve robustness of results.
 
-## Manual Download (if needed)
-If automatic download fails, manually download:
+### Skills & Technologies
+- **Python scripting** for automation and data processing.
+- Understanding of **software pipeline architecture** in AI systems.
+- Working with structured outputs (NumPy arrays, pose parameters, keypoints).
+- Experience integrating and extending existing research frameworks.
 
-```bash
-# Create directories
-mkdir -p data/models
-mkdir -p models/pare/data/pare/checkpoints
-mkdir -p models/pare/data/body_models/smpl
-mkdir -p models/yolo
-
-# Download using gdown
-pip install gdown
-
-gdown 1eZPkFzRN_TL_tUvfRTofiqWngproIirZ -O data/models/pose_hrnet_w48_384x288.pth
-gdown 1SRrH_ha122KD4z_PjJ0UDm_4U1ti97X- -O models/pare/data/pare/checkpoints/pare_w_3dpw_checkpoint.ckpt
-gdown 1Rza5kVxB7Lp5lP_o0r3LCpmk1LaepiI- -O models/pare/data/body_models/smpl/SMPL_NEUTRAL.pkl
-gdown 1bv56ZN7tRIoPXPfeow26rBdC1NddLdS2 -O models/yolo/yolov5m.pt
-```
-## Why Not Commit Models to Git?
-
-
-- **Size**: Total ~840MB - exceeds GitHub's limits
-- **Storage**: Uses Git LFS quota
-- **Speed**: Slow clone/pull times
-- **Best Practice**: Store large files in cloud storage
-
-## Alternative: Use Cloud Storage
-
-For production, consider:
-- **Google Cloud Storage**
-- **AWS S3**
-- **Hugging Face Hub**
+### References
+- EasyMocap framework and resources: https://github.com/zju3dv/EasyMocap
