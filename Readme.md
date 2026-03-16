@@ -1,23 +1,28 @@
 ## Project Overview
 
-This repository focuses on building and optimizing a **human motion capture pipeline based on EasyMocap** without modifying the underlying AI models.
+This repository focuses on building and optimizing a **human motion capture pipeline based on EasyMocap**, without modifying the underlying AI models.
 
 ### Scope
-- Utilize tools and modules from the official **EasyMocap** framework.
-- Adapt and optimize the processing pipeline to fit custom datasets.
-- Develop additional scripts to process and analyze model outputs.
+- Utilize tools and modules from the **EasyMocap** framework.
+- Adapt and optimize the processing pipeline for custom datasets.
+- Develop scripts to process, analyze, and manage model outputs.
 
 ### Key Tasks
-- Run and configure EasyMocap pipelines for motion capture tasks.
-- Work with outputs such as **keypoints, poses, and reconstructed 3D data**.
+- Configure and run EasyMocap pipelines for motion capture tasks.
+- Work with outputs such as **2D/3D keypoints, poses, and reconstruction data**.
 - Implement **post-processing methods** to reduce common errors in **monocular reconstruction**.
-- Integrate additional logic to improve robustness of results.
+- Integrate additional logic to improve robustness and usability of results.
+
+### Deployment
+- Implemented the **backend system on AWS servers** for remote processing.
+- Designed and exposed APIs for pipeline execution and result retrieval.  
+- API documentation: https://documenter.getpostman.com/view/51517173/2sBXVhDWMz
 
 ### Skills & Technologies
-- **Python scripting** for automation and data processing.
-- Understanding of **software pipeline architecture** in AI systems.
-- Working with structured outputs (NumPy arrays, pose parameters, keypoints).
-- Experience integrating and extending existing research frameworks.
+- **Python** for scripting, automation, and data processing.
+- Understanding of **AI software pipeline architecture**.
+- Experience working with structured outputs (NumPy arrays, pose parameters, keypoints).
+- Integration and extension of existing research frameworks.
 
 ### References
-- EasyMocap framework and resources: https://github.com/zju3dv/EasyMocap
+- EasyMocap: https://github.com/zju3dv/EasyMocap
