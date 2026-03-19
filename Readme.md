@@ -1,7 +1,7 @@
 ## Project Overview
 
 This repository focuses on building and optimizing a **human motion capture pipeline based on EasyMocap**, without modifying the underlying AI models.
-
+vdfvd
 ### Scope
 - Utilize tools and modules from the **EasyMocap** framework.
 - Adapt and optimize the processing pipeline for custom datasets.
