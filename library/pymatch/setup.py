@@ -3,7 +3,7 @@
  * @ Author: Qing Shuai
  * @ LastEditors: Qing Shuai
  * @ LastEditTime: 2020-09-12 17:57:36
- * @ FilePath: /MatchLR/setup.py sadasdsacxascas
+ * @ FilePath: /MatchLR/setup.py sadasd
 '''
 import os
 import re
