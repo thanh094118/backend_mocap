@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-
+#asdasds
 # Cấu hình đường dẫn
 CAM1_FOLDER = 'output/camera1/sv1p/confident'
 CAM2_FOLDER = 'output/camera2/sv1p/confident'
