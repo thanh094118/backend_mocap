@@ -6,7 +6,7 @@ import sys
 import os
 from pathlib import Path
 
-# Tự động nhận diện thư mục chứa file này (thường là /app trong Docker)
+# Tự động nhận diện thư mục chứa file này 
 BASE_DIR = Path(__file__).parent.absolute()
 
 MODELS = {
