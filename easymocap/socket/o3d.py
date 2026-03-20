@@ -3,7 +3,7 @@
   @ Author: Qing Shuai
   @ LastEditors: Qing Shuai
   @ LastEditTime: 2021-06-28 19:36:58
-  @ FilePath: /EasyMocapRelease/easymocap/socket/o3d.py
+  @ FilePath: /EasyMocapRelease/easymocap/socket/o3d.py efwfrf
 '''
 import open3d as o3d
 from ..config import load_object
