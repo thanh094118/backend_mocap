@@ -4,7 +4,7 @@ services:
     env: docker
     dockerfilePath: ./Dockerfile
     plan: standard  # Hoặc starter/pro
-    region: oregon  # Hoặc frankfurt (gần VN hơn)
+    region: oregon  # Hoặc frankfurt (gần VN hơn)sadcdsac
     
     envVars:
       - key: PORT
