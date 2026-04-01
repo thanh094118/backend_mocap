@@ -3,7 +3,7 @@ services:
     name: easymocap-api
     env: docker
     dockerfilePath: ./Dockerfile
-    plan: standard  # Hoặc starter/pro
+    plan: standard  # Hoặc starter/prodsfsedf
     region: oregon  # Hoặc frankfurt (gần VN hơn)sadcdsac
     
     envVars:
