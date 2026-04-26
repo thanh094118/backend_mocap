@@ -12,7 +12,7 @@ vdfvd
 - Work with outputs such as **2D/3D keypoints, poses, and reconstruction data**.
 - Implement **post-processing methods** to reduce common errors in **monocular reconstruction**.
 - Integrate additional logic to improve robustness and usability of results.
-
+sdfsdf
 ### Deployment
 - Implemented the **backend system on AWS servers** for remote processing.
 - Designed and exposed APIs for pipeline execution and result retrieval.  
