@@ -3,7 +3,7 @@ import sys
 import os
 from pathlib import Path
 
-# Mapping từ ID sang tên keypoint
+# Mapping 
 KEYPOINT_MAPPING = {
     2: "right_shoulder",
     3: "right_elbow",
