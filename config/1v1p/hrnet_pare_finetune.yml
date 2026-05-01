@@ -1,6 +1,6 @@
 module: myeasymocap.stages.basestage.MultiStage
 args:
-  output: sv1p # 指定输出路径
+  output: sv1p # 指定输出路径ádasda
   at_step:
     detect:
       module: myeasymocap.backbone.yolo.yolo.YoloWithTrack
